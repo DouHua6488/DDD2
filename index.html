@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI 健康計算機 | 衛福部國健署標準</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    /* 隱藏數字輸入框上下調節箭頭 */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
+
+  <!-- 頂部標題區 -->
+  <header class="w-full max-w-4xl text-center mb-6">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-semibold mb-2 border border-emerald-200">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      依據衛生福利部國民健康署指標規範
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+      BMI 健康體位計算機
+    </h1>
+    <p class="text-slate-500 text-sm sm:text-base mt-1">
+      即時檢視身體質量指數，掌握理想體態、飲水建議與基礎代謝率
+    </p>
+  </header>
+
+  <!-- 主要計算區塊 -->
+  <main class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- 左側：輸入表單卡片 -->
+    <section class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+      <div>
+        <!-- 單位切換 Toggle -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+          <span class="text-sm font-bold text-slate-700">測量單位</span>
+          <div class="bg-slate-100 p-1 rounded-xl flex text-xs font-bold text-slate-600">
+            <button id="btnMetric" onclick="setUnitSystem('metric')" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-emerald-700 transition">
+              公制 (cm / kg)
+            </button>
+            <button id="btnImperial" onclick="setUnitSystem('imperial')" class="px-3 py-1.5 rounded-lg transition hover:text-slate-900">
+              英制 (ft / lbs)
+            </button>
+          </div>
+        </div>
+
+        <form id="bmiForm" onsubmit="event.preventDefault(); calculateBMI();" class="space-y-4">
+          <!-- 身高輸入 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">身高</label>
+            
+            <!-- 公制身高 -->
+            <div id="metricHeightInput" class="relative">
+              <input type="number" id="heightCm" step="0.1" min="50" max="250" placeholder="例如：172"
+                class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-base sm:text-lg font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                oninput="autoCalculate()">
+              <span class="absolute right-4 top-3.5 text-xs sm:text-sm font-bold text-slate-400">cm</span>
+            </div>
+
+            <!-- 英制身高 -->
+            <div id="imperialHeightInput" class="grid grid-cols-2 gap-2 hidden">
+              <div class="relative">
+                <input type="number" id="heightFt" min="1" max="8" placeholder="英呎"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-base font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                  oninput="autoCalculate()">
+                <span class="absolute right-3 top-3.5 text-xs font-bold text-slate-400">ft</span>
+              </div>
+              <div class="relative">
+                <input type="number" id="heightIn" step="0.1" min="0" max="11.9" placeholder="英吋"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-base font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                  oninput="autoCalculate()">
+                <span class="absolute right-3 top-3.5 text-xs font-bold text-slate-400">in</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 體重輸入 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">體重</label>
+            
+            <!-- 公制體重 -->
+            <div id="metricWeightInput" class="relative">
+              <input type="number" id="weightKg" step="0.1" min="20" max="300" placeholder="例如：65.5"
+                class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-base sm:text-lg font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                oninput="autoCalculate()">
+              <span class="absolute right-4 top-3.5 text-xs sm:text-sm font-bold text-slate-400">kg</span>
+            </div>
+
+            <!-- 英制體重 -->
+            <div id="imperialWeightInput" class="relative hidden">
+              <input type="number" id="weightLbs" step="0.1" min="40" max="700" placeholder="例如：145"
+                class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-base sm:text-lg font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                oninput="autoCalculate()">
+              <span class="absolute right-4 top-3.5 text-xs sm:text-sm font-bold text-slate-400">lbs</span>
+            </div>
+          </div>
+
+          <!-- 性別與年齡 (進階分析) -->
+          <div class="pt-2">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500">性別與年齡（用於估算基礎代謝率）</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
+                <button type="button" id="genderMale" onclick="setGender('male')"
+                  class="py-2 rounded-xl text-xs font-bold bg-white text-slate-800 shadow-sm transition">
+                  男
+                </button>
+                <button type="button" id="genderFemale" onclick="setGender('female')"
+                  class="py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+                  女
+                </button>
+              </div>
+              <div class="relative">
+                <input type="number" id="ageInput" min="10" max="120" placeholder="年齡 (選填)"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                  oninput="autoCalculate()">
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">歲</span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- 操作按鈕 -->
+      <div class="flex gap-2.5 mt-6">
+        <button type="button" onclick="resetForm()" class="px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition">
+          重設
+        </button>
+        <button type="button" onclick="calculateBMI(true)" class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/25 transition">
+          計算並記錄 ➔
+        </button>
+      </div>
+    </section>
+
+    <!-- 右側：結果與健康指標看板 -->
+    <section class="lg:col-span-7 space-y-5">
+      
+      <!-- 主指標卡片 -->
+      <div class="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">計算結果</span>
+          <span id="bmiStatusTag" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+            請輸入身高體重
+          </span>
+        </div>
+
+        <div class="flex items-baseline gap-3 mb-6">
+          <div id="bmiValueDisplay" class="text-5xl sm:text-6xl font-black text-slate-900 tracking-tight">
+            --
+          </div>
+          <div class="text-slate-400 font-semibold text-sm sm:text-base">kg/m²</div>
+        </div>
+
+        <!-- 視覺化漸層色塊標尺與游標 -->
+        <div class="relative mb-2">
+          <!-- 游標指示點 -->
+          <div id="bmiPointer" class="absolute -top-3 -translate-x-1/2 transition-all duration-300 pointer-events-none" style="left: 0%; opacity: 0;">
+            <div class="w-3.5 h-3.5 bg-slate-900 border-2 border-white rounded-full shadow-md mx-auto"></div>
+            <div class="w-0.5 h-2 bg-slate-900 mx-auto"></div>
+          </div>
+
+          <!-- 色彩條 -->
+          <div class="h-3.5 rounded-full overflow-hidden flex w-full shadow-inner">
+            <div class="h-full bg-sky-400" style="width: 25%;" title="過輕 (<18.5)"></div>
+            <div class="h-full bg-emerald-500" style="width: 28%;" title="正常 (18.5-24)"></div>
+            <div class="h-full bg-amber-400" style="width: 15%;" title="過重 (24-27)"></div>
+            <div class="h-full bg-orange-500" style="width: 15%;" title="輕度肥胖 (27-30)"></div>
+            <div class="h-full bg-rose-500" style="width: 17%;" title="中重度肥胖 (≥30)"></div>
+          </div>
+        </div>
+
+        <!-- 區間標籤 -->
+        <div class="flex justify-between text-[11px] font-semibold text-slate-400 px-0.5 mb-6">
+          <span>15</span>
+          <span>18.5 (過輕)</span>
+          <span>24 (正常)</span>
+          <span>27 (過重)</span>
+          <span>30 (輕度)</span>
+          <span>35+</span>
+        </div>
+
+        <!-- 理想體重分析與差異 -->
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">理想健康體重範圍：</span>
+            <span id="idealWeightText" class="font-bold text-slate-800">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">體重調整建議：</span>
+            <span id="weightDiffText" class="font-bold text-slate-800">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 次要生活指標卡片 (飲水與基礎代謝率) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- 每日建議飲水 -->
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-sm">
+              💧
+            </div>
+            <span class="text-xs font-bold text-slate-600">每日建議水分攝取</span>
+          </div>
+          <div id="waterIntakeDisplay" class="text-2xl font-black text-sky-600">
+            -- <span class="text-xs font-medium text-slate-400">ml / 天</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            以每公斤體重 30~35 ml 估算標準
+          </p>
+        </div>
+
+        <!-- 基礎代謝率 BMR -->
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-sm">
+              🔥
+            </div>
+            <span class="text-xs font-bold text-slate-600">基礎代謝率 (BMR)</span>
+          </div>
+          <div id="bmrDisplay" class="text-2xl font-black text-orange-600">
+            -- <span class="text-xs font-medium text-slate-400">kcal / 天</span>
+          </div>
+          <p id="bmrTip" class="text-[11px] text-slate-400 mt-1">
+            填寫年齡與性別以獲得精準估算
+          </p>
+        </div>
+      </div>
+
+      <!-- 歷史紀錄 -->
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-800">測量歷史記錄</h3>
+            <span id="historyCount" class="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">0 筆</span>
+          </div>
+          <button onclick="clearHistory()" class="text-xs text-rose-500 hover:text-rose-600 font-semibold transition">
+            清除紀錄
+          </button>
+        </div>
+
+        <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-sm">
+          <p class="text-xs text-slate-400 text-center py-4">尚無測量記錄</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- 頁尾說明 -->
+  <footer class="w-full max-w-4xl text-center text-xs text-slate-400 mt-8 mb-4">
+    <p>BMI 數值僅作為體態評估之通用參考，運動員、孕婦或高肌肉量族群建議搭配體脂率綜合評估。</p>
+  </footer>
+
+  <script>
+    // 狀態設定
+    let currentUnit = 'metric'; // 'metric' or 'imperial'
+    let selectedGender = 'male'; // 'male' or 'female'
+    const STORAGE_KEY = 'bmi_calculator_history';
+
+    // 單位設定切換
+    function setUnitSystem(unit) {
+      currentUnit = unit;
+      const isMetric = unit === 'metric';
+
+      // 按鈕外觀
+      document.getElementById('btnMetric').className = isMetric 
+        ? 'px-3 py-1.5 rounded-lg bg-white shadow-sm text-emerald-700 transition' 
+        : 'px-3 py-1.5 rounded-lg transition hover:text-slate-900';
+      document.getElementById('btnImperial').className = !isMetric 
+        ? 'px-3 py-1.5 rounded-lg bg-white shadow-sm text-emerald-700 transition' 
+        : 'px-3 py-1.5 rounded-lg transition hover:text-slate-900';
+
+      // 輸入框顯示/隱藏
+      document.getElementById('metricHeightInput').classList.toggle('hidden', !isMetric);
+      document.getElementById('imperialHeightInput').classList.toggle('hidden', isMetric);
+      document.getElementById('metricWeightInput').classList.toggle('hidden', !isMetric);
+      document.getElementById('imperialWeightInput').classList.toggle('hidden', isMetric);
+
+      autoCalculate();
+    }
+
+    // 性別設定
+    function setGender(gender) {
+      selectedGender = gender;
+      const isMale = gender === 'male';
+
+      document.getElementById('genderMale').className = isMale
+        ? 'py-2 rounded-xl text-xs font-bold bg-white text-slate-800 shadow-sm transition'
+        : 'py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition';
+
+      document.getElementById('genderFemale').className = !isMale
+        ? 'py-2 rounded-xl text-xs font-bold bg-white text-slate-800 shadow-sm transition'
+        : 'py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition';
+
+      autoCalculate();
+    }
+
+    // 取得當前換算為公制的數值 (cm, kg)
+    function getMetricValues() {
+      let heightCm = 0;
+      let weightKg = 0;
+
+      if (currentUnit === 'metric') {
+        heightCm = parseFloat(document.getElementById('heightCm').value);
+        weightKg = parseFloat(document.getElementById('weightKg').value);
+      } else {
+        const ft = parseFloat(document.getElementById('heightFt').value) || 0;
+        const inches = parseFloat(document.getElementById('heightIn').value) || 0;
+        const totalInches = (ft * 12) + inches;
+        heightCm = totalInches * 2.54;
+
+        const lbs = parseFloat(document.getElementById('weightLbs').value) || 0;
+        weightKg = lbs * 0.45359237;
+      }
+
+      return { heightCm, weightKg };
+    }
+
+    // 即時計算
+    function autoCalculate() {
+      calculateBMI(false);
+    }
+
+    // 主要計算邏輯
+    function calculateBMI(saveToHistory = false) {
+      const { heightCm, weightKg } = getMetricValues();
+
+      if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
+        resetOutputs();
+        return;
+      }
+
+      // BMI 計算公式
+      const heightM = heightCm / 100;
+      const bmi = weightKg / (heightM * heightM);
+      const formattedBMI = bmi.toFixed(1);
+
+      // 國健署指標判斷
+      let statusText = '';
+      let tagBg = '';
+      let tagColor = '';
+
+      if (bmi < 18.5) {
+        statusText = '體重過輕';
+        tagBg = 'bg-sky-100';
+        tagColor = 'text-sky-700';
+      } else if (bmi < 24.0) {
+        statusText = '健康正常';
+        tagBg = 'bg-emerald-100';
+        tagColor = 'text-emerald-700';
+      } else if (bmi < 27.0) {
+        statusText = '體位過重';
+        tagBg = 'bg-amber-100';
+        tagColor = 'text-amber-700';
+      } else if (bmi < 30.0) {
+        statusText = '輕度肥胖';
+        tagBg = 'bg-orange-100';
+        tagColor = 'text-orange-700';
+      } else if (bmi < 35.0) {
+        statusText = '中度肥胖';
+        tagBg = 'bg-rose-100';
+        tagColor = 'text-rose-700';
+      } else {
+        statusText = '重度肥胖';
+        tagBg = 'bg-purple-100';
+        tagColor = 'text-purple-700';
+      }
+
+      // 更新畫面主要數值
+      document.getElementById('bmiValueDisplay').innerText = formattedBMI;
+      const statusTag = document.getElementById('bmiStatusTag');
+      statusTag.innerText = statusText;
+      statusTag.className = `px-3 py-1 rounded-full text-xs font-bold ${tagBg} ${tagColor}`;
+
+      // 計算標尺游標位置 (刻度範圍 15 ~ 35 對應 0% ~ 100%)
+      const minScale = 15;
+      const maxScale = 35;
+      let percentage = ((bmi - minScale) / (maxScale - minScale)) * 100;
+      percentage = Math.max(0, Math.min(100, percentage));
+
+      const pointer = document.getElementById('bmiPointer');
+      pointer.style.left = `${percentage}%`;
+      pointer.style.opacity = '1';
+
+      // 理想體重計算 (18.5 ~ 24.0)
+      const minIdealWeight = (18.5 * heightM * heightM).toFixed(1);
+      const maxIdealWeight = (24.0 * heightM * heightM).toFixed(1);
+      document.getElementById('idealWeightText').innerText = `${minIdealWeight} ~ ${maxIdealWeight} kg`;
+
+      // 體重增減建議
+      const diffElem = document.getElementById('weightDiffText');
+      if (weightKg < minIdealWeight) {
+        const needGain = (minIdealWeight - weightKg).toFixed(1);
+        diffElem.innerHTML = `<span class="text-sky-600 font-bold">需增重約 ${needGain} kg</span> 達標準體重`;
+      } else if (weightKg > maxIdealWeight) {
+        const needLose = (weightKg - maxIdealWeight).toFixed(1);
+        diffElem.innerHTML = `<span class="text-rose-600 font-bold">需減重約 ${needLose} kg</span> 達標準體重`;
+      } else {
+        diffElem.innerHTML = `<span class="text-emerald-600 font-bold">維持得很好！</span> 處於正常健康範圍`;
+      }
+
+      // 每日建議飲水量 (30 ~ 35 ml / kg)
+      const minWater = Math.round(weightKg * 30);
+      const maxWater = Math.round(weightKg * 35);
+      document.getElementById('waterIntakeDisplay').innerHTML = `${minWater} ~ ${maxWater} <span class="text-xs font-medium text-slate-400">ml / 天</span>`;
+
+      // BMR 基礎代謝率 (Mifflin-St Jeor 公式)
+      const ageVal = parseInt(document.getElementById('ageInput').value);
+      if (ageVal && ageVal > 0) {
+        let bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * ageVal);
+        bmr += (selectedGender === 'male') ? 5 : -161;
+        document.getElementById('bmrDisplay').innerHTML = `${Math.round(bmr)} <span class="text-xs font-medium text-slate-400">kcal / 天</span>`;
+        document.getElementById('bmrTip').innerText = `已依據 ${selectedGender === 'male' ? '男性' : '女性'}、${ageVal} 歲計算`;
+      } else {
+        document.getElementById('bmrDisplay').innerHTML = `-- <span class="text-xs font-medium text-slate-400">kcal / 天</span>`;
+        document.getElementById('bmrTip').innerText = `填寫年齡與性別以獲得精準估算`;
+      }
+
+      // 儲存至歷史記錄
+      if (saveToHistory) {
+        addHistoryRecord({
+          date: new Date().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          height: heightCm.toFixed(1),
+          weight: weightKg.toFixed(1),
+          bmi: formattedBMI,
+          status: statusText,
+          tagColor: tagColor
+        });
+      }
+    }
+
+    // 重設產出顯示
+    function resetOutputs() {
+      document.getElementById('bmiValueDisplay').innerText = '--';
+      const statusTag = document.getElementById('bmiStatusTag');
+      statusTag.innerText = '請輸入身高體重';
+      statusTag.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600';
+
+      document.getElementById('bmiPointer').style.opacity = '0';
+      document.getElementById('idealWeightText').innerText = '--';
+      document.getElementById('weightDiffText').innerText = '--';
+      document.getElementById('waterIntakeDisplay').innerHTML = `-- <span class="text-xs font-medium text-slate-400">ml / 天</span>`;
+      document.getElementById('bmrDisplay').innerHTML = `-- <span class="text-xs font-medium text-slate-400">kcal / 天</span>`;
+    }
+
+    // 表單清空
+    function resetForm() {
+      document.getElementById('heightCm').value = '';
+      document.getElementById('weightKg').value = '';
+      document.getElementById('heightFt').value = '';
+      document.getElementById('heightIn').value = '';
+      document.getElementById('weightLbs').value = '';
+      document.getElementById('ageInput').value = '';
+      resetOutputs();
+    }
+
+    // 歷史記錄功能
+    function getStoredHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function addHistoryRecord(record) {
+      let history = getStoredHistory();
+      history.unshift(record);
+      if (history.length > 8) history.pop(); // 最多保存 8 筆
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = getStoredHistory();
+      const listElem = document.getElementById('historyList');
+      const countElem = document.getElementById('historyCount');
+
+      countElem.innerText = `${history.length} 筆`;
+
+      if (history.length === 0) {
+        listElem.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">尚無測量記錄</p>`;
+        return;
+      }
+
+      listElem.innerHTML = history.map(item => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+          <div>
+            <div class="font-bold text-slate-700">${item.height} cm / ${item.weight} kg</div>
+            <div class="text-[10px] text-slate-400">${item.date}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-sm text-slate-800">BMI ${item.bmi}</span>
+            <span class="font-bold ${item.tagColor}">${item.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 初始化載入
+    window.onload = function() {
+      renderHistory();
+    };
+  </script>
+</body>
+</html>
